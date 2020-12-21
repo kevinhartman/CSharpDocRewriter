@@ -11,8 +11,15 @@ namespace CSharpFixes
 {
     public class CSharpCommentRewriter : CSharpSyntaxRewriter
     {
-        public CSharpCommentRewriter(): base(true)
+        private readonly IDictionary<string, string> commentBackup;
+
+        public IDictionary<string, string> Backup => commentBackup;
+
+        public bool IsStopping { get; private set; } = false;
+
+        public CSharpCommentRewriter(IDictionary<string, string> commentBackup): base(true)
         {
+            this.commentBackup = commentBackup;
         }
 
         static string EditCommentInVim(string comment)
@@ -32,14 +39,14 @@ namespace CSharpFixes
             }
         }
 
-        static IEnumerable<(string, string)> LinePaddings(IEnumerable<string> lines)
+        static IEnumerable<(string, string)> GetPadLineTuples(IEnumerable<string> lines)
         {
             foreach (var line in lines)
             {
                 if (string.IsNullOrWhiteSpace(line))
                     yield return (line, string.Empty);
 
-                var padRegex = "^\\s*///";
+                var padRegex = "^\\s*/// ?";
                 var match = Regex.Match(line, padRegex);
 
                 if (!match.Success)
@@ -65,28 +72,65 @@ namespace CSharpFixes
 
         public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
         {
-            if(trivia.Kind() == SyntaxKind.SingleLineDocumentationCommentTrivia)
+            if (this.IsStopping || trivia.Kind() != SyntaxKind.SingleLineDocumentationCommentTrivia)
             {
-                string rawComment = trivia.ToFullString();
-
-                var linePaddings = LinePaddings(ToLines(rawComment));
-                var paddings = linePaddings.Select(s => s.Item1);
-                var lines = linePaddings.Select(s => s.Item2);
-                var xml = LinesToString(lines);
-
-                string rewritten = EditCommentInVim(xml);
-
-                var rewrittenLines = ToLines(rewritten);
-
-                var zipped = rewrittenLines.Zip(paddings);
-                var rewrittenLinesWithPad = zipped.Select(t => $"{ t.Second }{ t.First }");
- 
-                var expression = SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, LinesToString(rewrittenLinesWithPad));
- 
-                return expression;
+                return base.VisitTrivia(trivia);
             }
 
-            return base.VisitTrivia(trivia);
+            string rawComment = trivia.ToFullString();
+
+            // Check if we've seen this comment before.
+            string rewrittenBackup;
+            if (commentBackup.TryGetValue(rawComment, out rewrittenBackup))
+            {
+                return SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rewrittenBackup);
+            }
+
+            var padLineTuples = GetPadLineTuples(ToLines(rawComment));
+            var lines = padLineTuples.Select(s => s.Item2);
+
+            var xml = LinesToString(lines);
+            var rewritten = EditCommentInVim(xml);
+
+            // If the user deletes everything, this signals they want to stop.
+            if (string.IsNullOrWhiteSpace(rewritten))
+            {
+                Console.WriteLine("Empty contents. Would you like to stop? (Y)");
+                Console.WriteLine("Your progress will be saved.\n");
+                Console.WriteLine("If not, the original comment will be left as it was.");
+                var response = Console.ReadLine();
+
+                if (response.Trim().ToLowerInvariant() == "y")
+                {
+                    this.IsStopping = true;
+                }
+
+                return base.VisitTrivia(trivia);
+            }
+
+            var rewrittenLines = ToLines(rewritten);
+
+            var paddings = padLineTuples.Select(s => s.Item1);
+
+            // The first line won't have any indentation, since it's the start
+            // of the doc comment token.
+            var firstLinePadding = paddings.FirstOrDefault() ?? string.Empty;
+
+            // The second line will be arbitrarily indented. We need to preserve it
+            // and apply it the same indent to the rest of the comment after rewriting.
+            var secondLinePadding = paddings.Skip(1).FirstOrDefault() ?? string.Empty;
+
+            var rewrittenLinesWithPadHead = rewrittenLines.Take(1).Select(s => $"{ firstLinePadding }{ s }");
+            var rewrittenLinesWithPadTail = rewrittenLines.Skip(1).Select(s => $"{ secondLinePadding }{ s }");
+            var rewrittenLinesWithPad = rewrittenLinesWithPadHead.Concat(rewrittenLinesWithPadTail);
+
+            var rewrittenComment = LinesToString(rewrittenLinesWithPad);
+            var expression = SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rewrittenComment);
+
+            // Back up this rewrite in case of restart.
+            commentBackup.Add(rawComment, rewrittenComment);
+
+            return expression;
         }
     }
 }
