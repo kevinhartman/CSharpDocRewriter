@@ -24,7 +24,7 @@ namespace CSharpFixes
 
         static string EditCommentInVim(string comment)
         {
-            return $"source ./editor.sh; cat <<EOM | run_editor \"~/.bashrc\" 1 | cat\n{comment}EOM".Bash();
+            return $"cat <<EOM | ./editor.sh \"~/.bashrc\" 1 | cat\n{comment}EOM".Bash();
         }
 
         static IEnumerable<string> ToLines(string content)
