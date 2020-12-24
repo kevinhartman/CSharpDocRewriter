@@ -9,4 +9,10 @@
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0-1.final" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="editor.sh">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
