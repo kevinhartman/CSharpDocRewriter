@@ -63,9 +63,11 @@ namespace CSharpFixes
                 var tree = CSharpSyntaxTree.ParseText(code);
                 var node = tree.GetRoot();
 
+                rewriter.CurrentFilePath = filePath;
+                var result = rewriter.Visit(node);
+
                 using (StreamWriter sw = new StreamWriter(filePath, false, inputFileEncoding))
                 {
-                    var result = rewriter.Visit(node);
                     sw.Write(result.ToFullString());
                 }
             }

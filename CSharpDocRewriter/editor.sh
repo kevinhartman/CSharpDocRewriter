@@ -12,7 +12,7 @@ source_file="$1"
 element_line_number="$2"
 
 # Write STDIN (the doc comment) to a temp file.
-comment_temp_file="$(mktemp)"
+comment_temp_file="$(mktemp --suffix=.xml)"
 cat > "$comment_temp_file"
 
 # Open visual editor with source file and doc comment temp file.

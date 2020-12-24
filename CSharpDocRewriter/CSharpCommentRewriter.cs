@@ -17,14 +17,23 @@ namespace CSharpFixes
 
         public bool IsStopping { get; private set; } = false;
 
+        // TODO: this is a kludge..Would be better to encapsulate file access
+        // in the same class so we know we have the right file.
+        public string CurrentFilePath { get; set; }
+
         public CSharpCommentRewriter(IDictionary<string, string> commentBackup): base(true)
         {
             this.commentBackup = commentBackup;
         }
 
-        static string EditCommentInVim(string comment)
+        string EditCommentInVim(string comment)
         {
-            return $"cat <<EOM | ./editor.sh \"~/.bashrc\" 1 | cat\n{comment}EOM".Bash();
+            if (CurrentFilePath == null)
+            {
+                throw new InvalidOperationException("File path must be set externally.");
+            }
+
+            return $"cat <<EOM | ./editor.sh `wslpath \"{CurrentFilePath}\"` 1 | cat\n{comment}EOM".Bash();
         }
 
         static IEnumerable<string> ToLines(string content)
