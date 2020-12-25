@@ -6,3 +6,7 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+
+# For this tiny project, there's no need to check this in since it'll just contain
+# the file paths used for manual testing.
+CSharpDocRewriter/Properties/launchSettings.json
