@@ -17,12 +17,11 @@ namespace CSharpFixes
         {
             if (!File.Exists(BackupPath))
             {
-                Console.WriteLine("Backup does not exist!");
                 return new Dictionary<string, string>();
             }
 
             var backupContents = File.ReadAllText(BackupPath);
-            Console.WriteLine($"Loaded backup from: { BackupPath }");
+            Console.WriteLine($"Using backup from: { BackupPath }");
 
             return JsonSerializer.Deserialize<Dictionary<string, string>>(backupContents);
         }
@@ -63,6 +62,7 @@ namespace CSharpFixes
                 var tree = CSharpSyntaxTree.ParseText(code);
                 var node = tree.GetRoot();
 
+                Console.WriteLine($"Editing file: { filePath }");
                 rewriter.CurrentFilePath = filePath;
                 var result = rewriter.Visit(node);
 

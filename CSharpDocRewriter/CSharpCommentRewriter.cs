@@ -89,10 +89,10 @@ namespace CSharpFixes
             string rawComment = trivia.ToFullString();
 
             // Check if we've seen this comment before.
-            string rewrittenBackup;
-            if (commentBackup.TryGetValue(rawComment, out rewrittenBackup))
+            if (commentBackup.ContainsKey(rawComment))
             {
-                return SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rewrittenBackup);
+                // This is a comment we've edited.
+                return SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rawComment);
             }
 
             var padLineTuples = GetPadLineTuples(ToLines(rawComment));
@@ -106,12 +106,12 @@ namespace CSharpFixes
             // If the user deletes everything, this signals they want to stop.
             if (string.IsNullOrWhiteSpace(rewritten))
             {
-                Console.WriteLine("Empty contents. Would you like to stop? (Y)");
-                Console.WriteLine("Your progress will be saved.\n");
-                Console.WriteLine("If not, the original comment will be left as it was.");
+                Console.WriteLine("\nEmpty contents. Continue? (y/n)");
+                Console.WriteLine("If you stop, your progress will be saved.");
+                Console.WriteLine("If you continue, the original comment will be left as it was.");
                 var response = Console.ReadLine();
 
-                if (response.Trim().ToLowerInvariant() == "y")
+                if (response.Trim().ToLowerInvariant() == "n")
                 {
                     this.IsStopping = true;
                 }
@@ -139,7 +139,8 @@ namespace CSharpFixes
             var expression = SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rewrittenComment);
 
             // Back up this rewrite in case of restart.
-            commentBackup.Add(rawComment, rewrittenComment);
+            // Note: we don't really need the rawComment, but JSON doesn't have sets.
+            commentBackup.TryAdd(rewrittenComment, rawComment);
 
             return expression;
         }
