@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Opens $VISUAL with both the XML doc comment intended for editing and the
+# Opens vim with both the XML doc comment intended for editing and the
 # original source code (for context).
 #
 # STDIN is the doc comment for editing.
@@ -15,9 +15,12 @@ element_line_number="$2"
 comment_temp_file="$(mktemp --suffix=.xml)"
 cat > "$comment_temp_file"
 
-# Open visual editor with source file and doc comment temp file.
-VISUAL=vim
-$VISUAL -o "$comment_temp_file" "$source_file" </dev/tty >/dev/tty
+# Open vim with source file and doc comment temp file.
+vim -o "$comment_temp_file" "$source_file" \
+  -c 'source ./helpers.vimrc' \
+  -c 'exe "norm \<C-w>j'$element_line_number'Gzt\<C-w>w"' \
+  -c 'setl noai nocin nosi inde=' \
+  </dev/tty >/dev/tty
 
 # Send edited doc comment to STDOUT.
 cat "$comment_temp_file"

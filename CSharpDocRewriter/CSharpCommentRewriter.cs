@@ -26,14 +26,14 @@ namespace CSharpFixes
             this.commentBackup = commentBackup;
         }
 
-        string EditCommentInVim(string comment)
+        string EditCommentInVim(string comment, int lineNumber)
         {
             if (CurrentFilePath == null)
             {
                 throw new InvalidOperationException("File path must be set externally.");
             }
 
-            return $"cat <<EOM | ./editor.sh `wslpath \"{CurrentFilePath}\"` 1 | cat\n{comment}EOM".Bash();
+            return $"cat <<EOM | ./editor.sh `wslpath \"{CurrentFilePath}\"` {lineNumber} | cat\n{comment}EOM".Bash();
         }
 
         static IEnumerable<string> ToLines(string content)
@@ -98,8 +98,10 @@ namespace CSharpFixes
             var padLineTuples = GetPadLineTuples(ToLines(rawComment));
             var lines = padLineTuples.Select(s => s.Item2);
 
+            var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line;
+
             var xml = LinesToString(lines);
-            var rewritten = EditCommentInVim(xml);
+            var rewritten = EditCommentInVim(xml, elementLineNumber);
 
             // If the user deletes everything, this signals they want to stop.
             if (string.IsNullOrWhiteSpace(rewritten))

@@ -13,6 +13,9 @@
       <None Update="editor.sh">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="helpers.vimrc">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
