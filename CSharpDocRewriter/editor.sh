@@ -33,7 +33,7 @@ cat > "$comment_temp_file"
 vim -o "$comment_temp_file" "$source_file" \
   -c 'source ./helpers.vimrc' \
   -c 'set so=0' \
-  -c 'exe "norm \<C-w>j'$(($element_line_number + 1))'GztM"' \
+  -c 'exe "norm \<C-w>j'$element_line_number'GztM"' \
   -c 'set so=999' \
   -c 'exe "norm \<C-w>w"' \
   -c 'setl noai nocin nosi inde=' \

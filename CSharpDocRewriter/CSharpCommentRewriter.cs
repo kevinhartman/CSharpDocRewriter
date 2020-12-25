@@ -98,7 +98,7 @@ namespace CSharpFixes
             var padLineTuples = GetPadLineTuples(ToLines(rawComment));
             var lines = padLineTuples.Select(s => s.Item2);
 
-            var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line;
+            var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
 
             var xml = LinesToString(lines);
             var rewritten = EditCommentInVim(xml, elementLineNumber);
@@ -128,7 +128,7 @@ namespace CSharpFixes
             var firstLinePadding = paddings.FirstOrDefault() ?? string.Empty;
 
             // The second line will be arbitrarily indented. We need to preserve it
-            // and apply it the same indent to the rest of the comment after rewriting.
+            // and apply the same indent to the rest of the comment after rewriting.
             var secondLinePadding = paddings.Skip(1).FirstOrDefault() ?? string.Empty;
 
             var rewrittenLinesWithPadHead = rewrittenLines.Take(1).Select(s => $"{ firstLinePadding }{ s }");
