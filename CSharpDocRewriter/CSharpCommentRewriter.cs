@@ -11,9 +11,9 @@ namespace CSharpFixes
 {
     public class CSharpCommentRewriter : CSharpSyntaxRewriter
     {
-        private readonly IDictionary<string, string> commentBackup;
+        private readonly IDictionary<string, string> state;
 
-        public IDictionary<string, string> Backup => commentBackup;
+        public IDictionary<string, string> SavedState => state;
 
         public bool IsStopping { get; private set; } = false;
 
@@ -21,9 +21,9 @@ namespace CSharpFixes
         // in the same class so we know we have the right file.
         public string CurrentFilePath { get; set; }
 
-        public CSharpCommentRewriter(IDictionary<string, string> commentBackup): base(true)
+        public CSharpCommentRewriter(IDictionary<string, string> savedState): base(true)
         {
-            this.commentBackup = commentBackup;
+            this.state = savedState;
         }
 
         string EditCommentInVim(string comment, int lineNumber)
@@ -89,7 +89,7 @@ namespace CSharpFixes
             string rawComment = trivia.ToFullString();
 
             // Check if we've seen this comment before.
-            if (commentBackup.ContainsKey(rawComment))
+            if (state.ContainsKey(rawComment))
             {
                 // This is a comment we've edited.
                 return SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rawComment);
@@ -154,9 +154,9 @@ namespace CSharpFixes
             var rewrittenComment = LinesToString(rewrittenLinesWithPad);
             var expression = SyntaxFactory.SyntaxTrivia(SyntaxKind.SingleLineCommentTrivia, rewrittenComment);
 
-            // Back up this rewrite in case of restart.
-            // Note: we don't really need the rawComment, but JSON doesn't have sets.
-            commentBackup.TryAdd(rewrittenComment, rawComment);
+            // Save this rewrite so we won't visit it again.
+            // Note: we don't really need rawComment, but JSON doesn't have sets.
+            state.TryAdd(rewrittenComment, rawComment);
 
             return expression;
         }

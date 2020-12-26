@@ -10,29 +10,29 @@ namespace CSharpFixes
 
     class Program
     {
-        private static string BackupPath =>
-            Environment.GetEnvironmentVariable("REWRITER_BACKUP_PATH")
-            ?? ".\\CommentBackup.json";
+        private static string SaveFilePath =>
+            Environment.GetEnvironmentVariable("REWRITER_SAVE_PATH")
+            ?? ".\\RewriterSavedState.json";
 
-        static IDictionary<string, string> LoadBackup()
+        static IDictionary<string, string> LoadSavedState()
         {
-            if (!File.Exists(BackupPath))
+            if (!File.Exists(SaveFilePath))
             {
                 return new Dictionary<string, string>();
             }
 
-            var backupContents = File.ReadAllText(BackupPath);
-            Console.WriteLine($"Using backup from: { Path.GetFullPath(BackupPath) } ");
+            var savedContents = File.ReadAllText(SaveFilePath);
+            Console.WriteLine($"Using save from: { Path.GetFullPath(SaveFilePath) } ");
 
-            return JsonSerializer.Deserialize<Dictionary<string, string>>(backupContents);
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(savedContents);
         }
 
-        static void SaveBackup(IDictionary<string, string> backup)
+        static void WriteSavedState(IDictionary<string, string> savedState)
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
-            var backupContents = JsonSerializer.Serialize(backup, options);
-            File.WriteAllText(BackupPath, backupContents);
-            Console.WriteLine($"Wrote backup to: { Path.GetFullPath(BackupPath) }");
+            var savedContents = JsonSerializer.Serialize(savedState, options);
+            File.WriteAllText(SaveFilePath, savedContents);
+            Console.WriteLine($"Wrote save to: { Path.GetFullPath(SaveFilePath) }");
         }
 
         static void DoPreamble()
@@ -46,7 +46,7 @@ Edit the current comment buffer only (changes made directly to the source file w
 If you need to take a break, delete everything inside the current XML comment buffer
 to signal that you'd like to save and exit.
 
-Your progress will be saved to: { Path.GetFullPath(BackupPath) }
+Your progress will be saved to: { Path.GetFullPath(SaveFilePath) }
 
 To make editing easier, the following Vim macros are available:
 
@@ -69,7 +69,7 @@ Press any key to start.
 
             DoPreamble();
 
-            var rewriter = new CSharpCommentRewriter(LoadBackup());
+            var rewriter = new CSharpCommentRewriter(LoadSavedState());
 
             foreach (var filePath in args)
             {
@@ -99,7 +99,7 @@ Press any key to start.
                 }
             }
 
-            SaveBackup(rewriter.Backup);
+            WriteSavedState(rewriter.SavedState);
 
             if (!rewriter.IsStopping)
             {
