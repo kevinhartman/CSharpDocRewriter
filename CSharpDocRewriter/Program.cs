@@ -52,6 +52,8 @@ To make editing easier, the following Vim macros are available:
 
     @t  Make the current word into a <paramref> tag.
     @y  Make the current word into a <see> tag.
+    @n  Insert a blank <returns> tag at the end of the comment.
+    @m  Insert a blank <remarks> tag at the end of the comment.
 
 Press any key to start.
 ");
@@ -98,6 +100,11 @@ Press any key to start.
             }
 
             SaveBackup(rewriter.Backup);
+
+            if (!rewriter.IsStopping)
+            {
+                Console.WriteLine("\nNothing left to do! Exiting...");
+            }
         }
     }
 }
