@@ -10,19 +10,19 @@ namespace CSharpFixes
 
     class Program
     {
-        private static string SaveFilePath =>
-            Environment.GetEnvironmentVariable("REWRITER_SAVE_PATH")
+        private static string SaveFileLocation =>
+            Environment.GetEnvironmentVariable("REWRITER_SAVE_LOCATION")
             ?? ".\\RewriterSavedState.json";
 
         static IDictionary<string, string> LoadSavedState()
         {
-            if (!File.Exists(SaveFilePath))
+            if (!File.Exists(SaveFileLocation))
             {
                 return new Dictionary<string, string>();
             }
 
-            var savedContents = File.ReadAllText(SaveFilePath);
-            Console.WriteLine($"Using save from: { Path.GetFullPath(SaveFilePath) } ");
+            var savedContents = File.ReadAllText(SaveFileLocation);
+            Console.WriteLine($"Using save from: { Path.GetFullPath(SaveFileLocation) } ");
 
             return JsonSerializer.Deserialize<Dictionary<string, string>>(savedContents);
         }
@@ -31,8 +31,8 @@ namespace CSharpFixes
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
             var savedContents = JsonSerializer.Serialize(savedState, options);
-            File.WriteAllText(SaveFilePath, savedContents);
-            Console.WriteLine($"Wrote save to: { Path.GetFullPath(SaveFilePath) }");
+            File.WriteAllText(SaveFileLocation, savedContents);
+            Console.WriteLine($"Wrote save to: { Path.GetFullPath(SaveFileLocation) }");
         }
 
         static void DoPreamble()
@@ -46,7 +46,7 @@ Edit the current comment buffer only (changes made directly to the source file w
 If you need to take a break, delete everything inside the current XML comment buffer
 to signal that you'd like to save and exit.
 
-Your progress will be saved to: { Path.GetFullPath(SaveFilePath) }
+Your progress will be saved to: { Path.GetFullPath(SaveFileLocation) }
 
 To make editing easier, the following Vim macros are available:
 
