@@ -106,17 +106,33 @@ namespace CSharpFixes
             // If the user deletes everything, this signals they want to stop.
             if (string.IsNullOrWhiteSpace(rewritten))
             {
-                Console.WriteLine("\nEmpty contents. Continue? (y/n)");
-                Console.WriteLine("If you stop, your progress will be saved.");
-                Console.WriteLine("If you continue, the original comment will be left as it was.");
-                var response = Console.ReadLine();
+                Console.WriteLine("\nEmpty contents. What would you like to do?");
 
-                if (response.Trim().ToLowerInvariant() == "n")
+                var validResponses = new int[] { 'q', 'c' };
+                while (true)
                 {
-                    this.IsStopping = true;
-                }
+                    Console.WriteLine("(q) Save progress and exit.");
+                    Console.WriteLine("(c) Continue, but skip to the next comment (no modification).");
+                    Console.Write("Answer: ");
 
-                return base.VisitTrivia(trivia);
+                    var response = Console.ReadKey().KeyChar;
+
+                    // Write a blank so the next output starts on the next line from
+                    // the user's answer.
+                    Console.WriteLine();
+
+                    if (validResponses.Contains(response))
+                    {
+                        if (response == 'q')
+                        {
+                            this.IsStopping = true;
+                        }
+
+                        return base.VisitTrivia(trivia);
+                    }
+
+                    Console.WriteLine("\nEhem...");
+                }
             }
 
             var rewrittenLines = ToLines(rewritten);
