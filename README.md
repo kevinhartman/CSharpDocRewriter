@@ -1,6 +1,10 @@
 # CSharpDocRewriter
 A Roslyn-powered tool for rewriting C# XML documentation comments with a Vim front-end.
 
+<p align="center">
+  <img src="editing.gif" alt="Editing with CSharpDocRewriter">
+</p>
+
 ## Details
 This tools iterates over all XML doc comments in the provided source file(s) one-by-one,
 opening each for manual editing in Vim, alongside the corresponding source-code element.
