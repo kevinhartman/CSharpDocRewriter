@@ -19,7 +19,17 @@ Save your progress and exit. Pick up where you left off.
 CSharpDocRewriter.exe [csharp_file...]
 ```
 
-Instruction is given in the tool.
+While editing, the following Vim macros are available:
+
+```
+    @t  Make the current word into a <paramref> tag.
+    @y  Make the current word into a <see> tag.
+    @n  Insert a blank <returns> tag at the end of the comment.
+    @m  Insert a blank <remarks> tag at the end of the comment.
+    @p  Insert a <param> tag for the current word at the end of the comment.
+```
+
+Further instruction is given in the tool.
 
 ### Save file
 By default, a savestate is created in the current working directory.

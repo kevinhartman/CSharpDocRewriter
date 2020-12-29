@@ -54,6 +54,7 @@ To make editing easier, the following Vim macros are available:
     @y  Make the current word into a <see> tag.
     @n  Insert a blank <returns> tag at the end of the comment.
     @m  Insert a blank <remarks> tag at the end of the comment.
+    @p  Insert a <param> tag for the current word at the end of the comment.
 
 Press any key to start.
 ");
