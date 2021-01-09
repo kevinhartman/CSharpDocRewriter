@@ -19,6 +19,7 @@ namespace CSharpFixes
                     FileName = "ubuntu",
                     Arguments = $"run \"{escapedArgs}\"",
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = false,
                 }
@@ -27,7 +28,15 @@ namespace CSharpFixes
             process.Start();
 
             string result = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
             process.WaitForExit();
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                System.Console.Error.WriteLine("\n ** Warning! Script command wrote to stderr:\n");
+                System.Console.Error.WriteLine(error);
+            }
 
             return result;
         }
