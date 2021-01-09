@@ -12,6 +12,7 @@ namespace CSharpFixes
     public class CSharpCommentRewriter : CSharpSyntaxRewriter
     {
         private readonly IDictionary<string, string> state;
+        private readonly string authorFilter;
 
         public IDictionary<string, string> SavedState => state;
 
@@ -21,9 +22,32 @@ namespace CSharpFixes
         // in the same class so we know we have the right file.
         public string CurrentFilePath { get; set; }
 
-        public CSharpCommentRewriter(IDictionary<string, string> savedState): base(true)
+        public CSharpCommentRewriter(IDictionary<string, string> savedState, string authorFilter = null): base(true)
         {
             this.state = savedState;
+            this.authorFilter = authorFilter;
+        }
+
+        bool ShouldEdit(int lineNumber, int commentLength)
+        {
+            if (string.IsNullOrWhiteSpace(authorFilter))
+            {
+                return true;
+            }
+
+            var start = lineNumber;
+            var end = lineNumber + commentLength - 1;
+
+            // Get author list for this comment with git blame
+            var authorsCommand = $"file_path=`wslpath \"{CurrentFilePath}\"`; cd `dirname $file_path` ; git blame --line-porcelain -L {start},{end} $file_path " +
+                $"| sed -n 's/^author //p' " +
+                $"| sort " +
+                $"| uniq";
+
+            var authors = authorsCommand.Bash().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+
+            return authors.Contains(authorFilter);
         }
 
         string EditCommentInVim(string comment, int lineNumber)
@@ -97,6 +121,13 @@ namespace CSharpFixes
 
             var padLineTuples = GetPadLineTuples(ToLines(rawComment));
             var lines = padLineTuples.Select(s => s.Item2);
+
+            var commentLineNumber = trivia.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
+            if (!ShouldEdit(commentLineNumber, lines.Count()))
+            {
+                // This comment didn't match the current filter, so we'll skip it.
+                return base.VisitTrivia(trivia);
+            }
 
             var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
 
