@@ -14,6 +14,9 @@ namespace CSharpFixes
             Environment.GetEnvironmentVariable("REWRITER_SAVE_LOCATION")
             ?? ".\\RewriterSavedState.json";
 
+        private static string AuthorFilter =>
+            Environment.GetEnvironmentVariable("REWRITER_GIT_AUTHOR_NAME");
+
         static IDictionary<string, string> LoadSavedState()
         {
             if (!File.Exists(SaveFileLocation))
@@ -37,8 +40,13 @@ namespace CSharpFixes
 
         static void DoPreamble()
         {
+            var authorMessage = !string.IsNullOrWhiteSpace(AuthorFilter)
+                ? $"Only visiting comments (touched) by: {AuthorFilter}"
+                : "To visit only comments by a specific Git author, provide the author name\n" +
+                  "as REWRITER_GIT_AUTHOR_NAME env var.";
+
             Console.WriteLine($@"
-Hello.
+It's focus time!
 We're about to visit every XML doc comment from the input files in Vim, one at a time.
 
 Edit the current comment buffer only (changes made directly to the source file will be discarded).
@@ -56,6 +64,8 @@ To make editing easier, the following Vim macros are available:
     @m  Insert a blank <remarks> tag at the end of the comment.
     @p  Insert a <param> tag for the current word at the end of the comment.
 
+{authorMessage}
+
 Press any key to start.
 ");
             Console.ReadKey();
@@ -70,7 +80,7 @@ Press any key to start.
 
             DoPreamble();
 
-            var rewriter = new CSharpCommentRewriter(LoadSavedState());
+            var rewriter = new CSharpCommentRewriter(LoadSavedState(), AuthorFilter);
 
             foreach (var filePath in args)
             {

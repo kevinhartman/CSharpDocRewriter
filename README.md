@@ -13,6 +13,13 @@ Predefined macros make it easy to quickly edit C# XML doc tags.
 
 Save your progress and exit. Pick up where you left off.
 
+### Filter by Git author
+Set env `REWRITER_GIT_AUTHOR_NAME` to visit only XML doc comments that have been touched
+by a specific author.
+
+This feature works by running Git blame standing in the current C# file's parent
+directory for the span of the current comment.
+
 ## Usage
 
 ```
@@ -34,7 +41,7 @@ Further instruction is given in the tool.
 ### Save file
 By default, a savestate is created in the current working directory.
 
-Set `REWRITER_SAVE_LOCATION` to a custom Windows file path, if desired.
+Set env `REWRITER_SAVE_LOCATION` to a custom Windows file path, if desired.
 
 ## Requirements
 Only runs on Windows with **Ubuntu** Windows Subsystem for Linux (WSL) installed.
