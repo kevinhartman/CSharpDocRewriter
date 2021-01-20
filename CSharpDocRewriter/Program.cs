@@ -111,7 +111,10 @@ Press any key to start.
                 throw new ArgumentException("You must provide at least one source file.");
             }
 
-            DoPreamble();
+            if (!automatic)
+            {
+                DoPreamble();
+            }
 
             var rewriter = new CSharpCommentRewriter(LoadSavedState(), AuthorFilter)
             {
