@@ -6,11 +6,22 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace CSharpFixes
 {
     public class CSharpCommentRewriter : CSharpSyntaxRewriter
     {
+        public static string[] DefaultTagOrdering = {
+            "summary",
+            "typeparam",
+            "param",
+            "returns",
+            "exception",
+            "remarks",
+            "example"
+        };
+
         private readonly IDictionary<string, string> state;
         private readonly string authorFilter;
 
@@ -18,12 +29,21 @@ namespace CSharpFixes
 
         public bool IsStopping { get; private set; } = false;
 
+        public bool SkipEditor { get; set; } = false;
+
+        public IEnumerable<string> TagOrdering = null;
+
         // TODO: this is a kludge..Would be better to encapsulate file access
         // in the same class so we know we have the right file.
         public string CurrentFilePath { get; set; }
 
         public CSharpCommentRewriter(IDictionary<string, string> savedState, string authorFilter = null): base(true)
         {
+            if (savedState == null)
+            {
+                throw new ArgumentException($"{nameof(savedState)} must not be null.");
+            }
+
             this.state = savedState;
             this.authorFilter = authorFilter;
         }
@@ -50,14 +70,20 @@ namespace CSharpFixes
             return authors.Contains(authorFilter);
         }
 
-        string EditCommentInVim(string comment, int lineNumber)
+        string PerformEdits(string comment, int lineNumber)
         {
             if (CurrentFilePath == null)
             {
                 throw new InvalidOperationException("File path must be set externally.");
             }
 
-            return $"cat <<EOM | ./editor.sh `wslpath \"{CurrentFilePath}\"` {lineNumber} | cat\n{comment}EOM".Bash();
+            var result = SkipEditor ? comment : Edits.EditInVim(CurrentFilePath, comment, lineNumber);
+            if (TagOrdering != null)
+            {
+                result = Edits.EditReorderTags(TagOrdering, result);
+            }
+
+            return result;
         }
 
         static IEnumerable<string> ToLines(string content)
@@ -132,7 +158,7 @@ namespace CSharpFixes
             var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
 
             var xml = LinesToString(lines);
-            var rewritten = EditCommentInVim(xml, elementLineNumber);
+            var rewritten = PerformEdits(xml, elementLineNumber);
 
             // If the user deletes everything, this signals they want to stop.
             if (string.IsNullOrWhiteSpace(rewritten))
