@@ -1,12 +1,15 @@
-﻿using System;
-using System.IO;
-
-namespace CSharpFixes
+﻿namespace CSharpFixes
 {
     using Microsoft.CodeAnalysis.CSharp;
     using System.Collections.Generic;
     using System.Text;
     using System.Text.Json;
+
+    using System;
+    using System.CommandLine;
+    using System.CommandLine.Invocation;
+    using System.IO;
+    using System.Linq;
 
     class Program
     {
@@ -71,18 +74,52 @@ Press any key to start.
             Console.ReadKey();
         }
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            if (args.Length < 1)
+            // Create a root command with some options
+            var rootCommand = new RootCommand
+            {
+                new Option<bool>(
+                    "--automatic",
+                    getDefaultValue: () => false,
+                    description: "Don't open Vim. Instead, apply automatic changes, only."),
+                new Option<bool>(
+                    "--reorder-tags",
+                    getDefaultValue: () => false,
+                    description: "Reorder comment XML tags after edits."),
+                new Argument<IEnumerable<string>>("files", "The list of files to visit.")
+            };
+
+            rootCommand.Description = "Iterates over all XML doc comments in the " +
+                "provided source file(s) one-by-one, opening each for manual editing in Vim, " +
+                "alongside the corresponding source-code element.";
+
+            // Note that the parameters of the handler method are matched according
+            // to the names of the options!
+            rootCommand.Handler = CommandHandler.Create<bool, bool, IEnumerable<string>>(Visit);
+
+            // Parse the incoming args and invoke the handler
+            return rootCommand.InvokeAsync(args).Result;
+        }
+
+        // IMPORTANT!
+        // The parameter names of this method must match those of 'rootCommand' above!
+        static void Visit(bool automatic, bool reorderTags, IEnumerable<string> files)
+        {
+            if (files.Count() < 1)
             {
                 throw new ArgumentException("You must provide at least one source file.");
             }
 
             DoPreamble();
 
-            var rewriter = new CSharpCommentRewriter(LoadSavedState(), AuthorFilter);
+            var rewriter = new CSharpCommentRewriter(LoadSavedState(), AuthorFilter)
+            {
+                SkipEditor = automatic,
+                TagOrdering = reorderTags ? CSharpCommentRewriter.DefaultTagOrdering : null
+            };
 
-            foreach (var filePath in args)
+            foreach (var filePath in files)
             {
                 if (rewriter.IsStopping)
                 {
