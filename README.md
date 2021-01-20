@@ -6,8 +6,8 @@ A Roslyn-powered tool for rewriting C# XML documentation comments with a Vim fro
 </p>
 
 ## Details
-This tools iterates over all XML doc comments in the provided source file(s) one-by-one,
-opening each for manual editing in Vim, alongside the corresponding source-code element.
+This tools edits all XML doc comments in the provided source file(s) one-by-one,
+optionally opening each for manual editing in Vim, alongside the corresponding source-code element.
 
 Predefined macros make it easy to quickly edit C# XML doc tags.
 
@@ -23,7 +23,12 @@ directory for the span of the current comment.
 ## Usage
 
 ```
-CSharpDocRewriter.exe [csharp_file...]
+CSharpDocRewriter.exe [options] [<files>...]
+
+Options:
+  --automatic       Don't open Vim. Instead, apply automatic changes, only. [default: False]
+  --reorder-tags    Reorder comment XML tags after edits. [default: False]
+  -?, -h, --help    Show help and usage information
 ```
 
 While editing, the following Vim macros are available:
@@ -44,7 +49,5 @@ By default, a savestate is created in the current working directory.
 Set env `REWRITER_SAVE_LOCATION` to a custom Windows file path, if desired.
 
 ## Requirements
-Only runs on Windows with **Ubuntu** Windows Subsystem for Linux (WSL) installed.
-
-### Why?
-Limited time. Please contribute :)
+Currently only runs on Windows with **Ubuntu** Windows Subsystem for Linux (WSL) installed.
+Contibutions appreciated!
