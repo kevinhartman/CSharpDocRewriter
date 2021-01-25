@@ -38,7 +38,8 @@ Catches any thrown exception, and calls <paramref name=""onException"" />, if no
 </remarks>
 <!-- this is a trailing comment -->";
 
-            var actual = Edits.EditReorderTags(CSharpCommentRewriter.DefaultTagOrdering, input);
+            string actual;
+            Edits.TryEditReorderTags(CSharpCommentRewriter.DefaultTagOrdering, input, out actual);
 
             Assert.Equal(expected, actual);
         }
@@ -56,7 +57,8 @@ Loads the Q# data structures in a referenced assembly.
 </summary>
 <!-- TODO: testing -->";
 
-            var actual = Edits.EditReorderTags(CSharpCommentRewriter.DefaultTagOrdering, input);
+            string actual;
+            Edits.TryEditReorderTags(CSharpCommentRewriter.DefaultTagOrdering, input, out actual);
 
             Assert.Equal(expected, actual);
         }

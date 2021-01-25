@@ -28,6 +28,7 @@ namespace CSharpFixes
         public IDictionary<string, string> SavedState => state;
 
         public bool IsStopping { get; private set; } = false;
+        public bool HasEditErrors { get; private set; } = false;
 
         public bool SkipEditor { get; set; } = false;
 
@@ -70,20 +71,20 @@ namespace CSharpFixes
             return authors.Contains(authorFilter);
         }
 
-        string PerformEdits(string comment, int lineNumber)
+        bool TryPerformEdits(string comment, int lineNumber, out string edited)
         {
             if (CurrentFilePath == null)
             {
                 throw new InvalidOperationException("File path must be set externally.");
             }
 
-            var result = SkipEditor ? comment : Edits.EditInVim(CurrentFilePath, comment, lineNumber);
+            edited = SkipEditor ? comment : Edits.EditInVim(CurrentFilePath, comment, lineNumber);
             if (TagOrdering != null)
             {
-                result = Edits.EditReorderTags(TagOrdering, result);
+                return Edits.TryEditReorderTags(TagOrdering, edited, out edited);
             }
 
-            return result;
+            return true;
         }
 
         static IEnumerable<string> ToLines(string content)
@@ -158,7 +159,14 @@ namespace CSharpFixes
             var elementLineNumber = trivia.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
 
             var xml = LinesToString(lines);
-            var rewritten = PerformEdits(xml, elementLineNumber);
+
+            string rewritten;
+            if (!TryPerformEdits(xml, elementLineNumber, out rewritten))
+            {
+                // One of the edits failed.
+                HasEditErrors = true;
+                return base.VisitTrivia(trivia);
+            }
 
             // If the user deletes everything, this signals they want to stop.
             if (string.IsNullOrWhiteSpace(rewritten))
