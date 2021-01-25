@@ -152,6 +152,17 @@ Press any key to start.
 
             WriteSavedState(rewriter.SavedState);
 
+            if (rewriter.HasEditErrors)
+            {
+                Console.Error.WriteLine("\nErrors encounted during at least one edit.");
+                Console.Error.WriteLine("Run the program again with the same files to retry only the failed edits.");
+                
+                if (automatic)
+                {
+                    Console.Error.WriteLine("Suggestion: remove --automatic and manually fix any invalid XML.");
+                }
+            }
+
             if (!rewriter.IsStopping)
             {
                 Console.WriteLine("\nNothing left to do! Exiting...");

@@ -13,7 +13,7 @@ namespace CSharpFixes
             return $"cat <<EOM | ./editor.sh `wslpath \"{filePath}\"` {lineNumber} | cat\n{comment}EOM".Bash();
         }
 
-        public static string EditReorderTags(IEnumerable<string> tagOrdering, string comment)
+        public static bool TryEditReorderTags(IEnumerable<string> tagOrdering, string comment, out string editedComment)
         {
             // We first need to create a root XML element (this is dirty)
             var withRoot = "<root>\r\n" + comment + "\r\n</root>";
@@ -25,7 +25,9 @@ namespace CSharpFixes
             catch (Exception e)
             {
                 Console.Error.WriteLine("Failed to parse XML when attempting to reorder elements: " + e.Message);
-                return comment;
+                Console.Error.WriteLine(comment);
+                editedComment = null;
+                return false;
             }
 
             var rootElement = xml.Element("root");
@@ -89,7 +91,8 @@ namespace CSharpFixes
                 stringBuilder.AppendLine(xComment.ToString(SaveOptions.DisableFormatting));
             }
 
-            return stringBuilder.ToString().TrimEnd();
+            editedComment = stringBuilder.ToString().TrimEnd();
+            return true;
         }
     }
 }
